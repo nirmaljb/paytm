@@ -1,11 +1,14 @@
 const express = require("express")
 const { Account, User } = require("../db")
 const signinMiddleware = require("../middlewares/signinMiddleware")
-const authMiddleware = require("../middlewares/authMiddleware")
 const { default: mongoose } = require("mongoose")
 const router = express.Router()
 
-router.get("/balance", signinMiddleware, async (req, res) => {
+const app = express()
+
+app.use(signinMiddleware)
+
+router.get("/balance", async (req, res) => {
     const response = await Account.findOne({userId: req.headers.userid})
 
     if(!response) return res.status(403).json({msg: "Not Account with that id"})
@@ -14,7 +17,7 @@ router.get("/balance", signinMiddleware, async (req, res) => {
 
 })
 
-router.post("/transfer", authMiddleware, async (req, res) => {
+router.post("/transfer", async (req, res) => {
     const session = await mongoose.startSession()
 
     session.startTransaction()

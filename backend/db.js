@@ -1,7 +1,7 @@
 const mongoose = require("mongoose")
 const { Schema } = mongoose
 
-mongoose.connect('mongodb://localhost:27017/paytm')
+mongoose.connect('mongodb://localhost:2717/paytm')
 
 const userSchema = Schema({
     email: {
