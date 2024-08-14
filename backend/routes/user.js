@@ -30,8 +30,10 @@ router.post('/signup', authMiddleware, async (req, res) => {
         return res.json({msg: 'user created', token: `Bearer ${jwt_token}`})
 
     }catch(error) {
-        const error_reason = error.keyValue
-        return res.json({msg: error_reason, err: error})
+        if(error.code === 11000) {
+            const duplicateField = Object.keys(error.keyPattern)[0]
+            res.json({msg: `User with this ${duplicateField} already exists.`, error: error})
+        }
     }
 
 })
@@ -45,7 +47,7 @@ router.post('/signin', signinMiddleware, async (req, res) => {
      const isMatch = await bcrypt.compare(password, response.password)
      
      if(!isMatch) {
-         return res.json({msg: "password doesn't match"})
+         return res.status(403).json({msg: "password doesn't match"})
      }
 
      res.json({msg: 'logged in', log: response})

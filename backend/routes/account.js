@@ -4,46 +4,42 @@ const signinMiddleware = require("../middlewares/signinMiddleware")
 const { default: mongoose } = require("mongoose")
 const router = express.Router()
 
-const app = express()
-
-app.use(signinMiddleware)
-
-router.get("/balance", async (req, res) => {
+router.get("/balance", signinMiddleware, async (req, res) => {
     const response = await Account.findOne({userId: req.headers.userid})
-
-    if(!response) return res.status(403).json({msg: "Not Account with that id"})
     
-    res.json({balance: response.balance})
-
+    if(!response) return res.status(403).json({msg: "Not Account with that id"})
+        
+        res.json({balance: response.balance})
+        
 })
-
-router.post("/transfer", async (req, res) => {
+    
+router.post("/transfer", signinMiddleware, async (req, res) => {
     const session = await mongoose.startSession()
-
+    
     session.startTransaction()
     const { amount, to } = req.body
-
+    
     const account = await Account.findOne({userId: req.headers.userid}).session(session)
     if(!account || account.balance < amount) {
         await session.abortTransaction()
         return res.status(400).json({msg: 'insufficiant bank balance'})
     }
-
+    
     const toAccount = await Account.findOne({userId: to}).session(session)
     if(!toAccount) {
         await session.abortTransaction()
         return res.status(400).json({msg: 'invalid account address'})
     }
-
+    
     await Account.updateOne({userId: req.headers.userid}, {$inc: {balance: -amount}}).session(session)
     await Account.updateOne({userId: to}, {$inc: {balance: amount}}).session(session)
-
+    
     await session.commitTransaction()
     res.json({
         msg: 'Transaction completed'
     })
-
-
+    
+    
 })
 
 module.exports = router;
