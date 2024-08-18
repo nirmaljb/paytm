@@ -32,7 +32,7 @@ router.post('/signup', authMiddleware, async (req, res) => {
     }catch(error) {
         if(error.code === 11000) {
             const duplicateField = Object.keys(error.keyPattern)[0]
-            res.json({msg: `User with this ${duplicateField} already exists.`, error: error})
+            res.status(409).json({msg: `User with this ${duplicateField} already exists.`, error: error})
         }
     }
 
@@ -53,11 +53,16 @@ router.post('/signin', signinMiddleware, async (req, res) => {
      res.json({msg: 'logged in', log: response})
 })
 
-router.put('/', updateMiddleware, async (req, res) => {
-    console.log(req.userId)
+router.put('/', signinMiddleware, updateMiddleware, async (req, res) => {
+    console.log(req.userId +  "<- calling from line 57")
     try {
-        const response = await User.updateOne({ _id: req.userId }, req.body)
-        return res.json({msg: 'user details updated', response: response})
+        const { new_username, email } = req.body;
+        const response = await User.updateOne({ _id: req.headers.userid }, {username: new_username, email})
+        if(!req.body['new_username']) {
+            return res.json({msg: 'not changes requested from the user', response: response, token: 'same'})
+        }        
+        const new_token = jwt.sign({userId: req.headers.userid, username: req.body['new_username']}, JWT_SECRET)
+        return res.json({msg: 'user details updated', response: response, token: new_token})
     }catch(error) {
         return res.status(403).json({msg: 'error occured', error: error})
     }

@@ -3,11 +3,12 @@ const { z } = zod
 
 function updateMiddleware(req, res, next) {
     const schema = zod.object({
-        username: z.string().optional(),
+        new_username: z.string().optional(),
         email: z.string().optional(),
     })
 
-    const { success } = schema.safeParse(req.body)
+    const { new_username, email } = req.body 
+    const { success } = schema.safeParse({new_username, email})
     if(!success) {
         return res.status(403).json({msg: 'invalid user inputs', error: response.error})
     }
